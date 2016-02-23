@@ -67,6 +67,13 @@ func (bq *BlockingQueue) Size() int {
 	return bq.queue.Len()
 }
 
+// Closed flag
+func (bq *BlockingQueue) Closed() bool {
+	bq.lock.Lock()
+	defer bq.lock.Unlock()
+	return bq.closed
+}
+
 // Close queue and explicitly remove each item from queue.
 // Also notifies all reader (they will return nil and false)
 // Returns error if queue already closed
