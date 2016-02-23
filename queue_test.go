@@ -14,6 +14,16 @@ func TestCreatePutQueue(t *testing.T) {
 	}
 }
 
+func TestCreatePutDropQueue(t *testing.T) {
+	queue := New()
+	if !queue.PutOrDrop(0, 1) {
+		t.Fatal("Any value must be accepted in new queue with limit 1")
+	}
+	if queue.PutOrDrop(1, 1) {
+		t.Fatal("Value must be dropped")
+	}
+}
+
 func TestFillReadOneThread(t *testing.T) {
 	queue := New()
 	sum := 0
@@ -26,7 +36,6 @@ func TestFillReadOneThread(t *testing.T) {
 	//Check
 	nsum := 0
 	for queue.Size() > 0 {
-		t.Log(queue.Size())
 		val, ok := queue.Pop()
 		if !ok {
 			t.Fatal("Not all values available")
