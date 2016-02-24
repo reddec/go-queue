@@ -29,6 +29,9 @@ func (bq *BlockingQueue) Put(value interface{}) bool {
 		return false
 	}
 	bq.lock.Lock()
+	if bq.closed {
+		return false
+	}
 	bq.queue.PushBack(value)
 	bq.lock.Unlock()
 
@@ -38,7 +41,7 @@ func (bq *BlockingQueue) Put(value interface{}) bool {
 	return true
 }
 
-// Put or drop value to queue back or drop if queue full.
+// Put value to queue back or drop if queue full.
 // Returns false if queue closed or queue is full
 func (bq *BlockingQueue) PutOrDrop(value interface{}, limit int) bool {
 	if bq.closed {
@@ -46,15 +49,16 @@ func (bq *BlockingQueue) PutOrDrop(value interface{}, limit int) bool {
 	}
 	ok := false
 	bq.lock.Lock()
+	if bq.closed {
+		return false
+	}
 	if bq.queue.Len() < limit {
 		bq.queue.PushBack(value)
 		ok = true
 	}
 	bq.lock.Unlock()
 	if ok {
-		bq.notifyLock.Lock()
 		bq.monitor.Signal()
-		bq.notifyLock.Unlock()
 	}
 	return ok
 }
@@ -115,6 +119,9 @@ func (bq *BlockingQueue) Close() error {
 func (bq *BlockingQueue) getUnblock() (interface{}, bool) {
 	bq.lock.Lock()
 	defer bq.lock.Unlock()
+	if bq.closed {
+		return nil, false
+	}
 	if bq.queue.Len() > 0 {
 		elem := bq.queue.Front()
 		bq.queue.Remove(elem)
